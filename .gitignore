@@ -2,3 +2,6 @@
 .env
 .env.*
 !.env.example
+
+# probably not allowed to use all the photos so removing them for now
+static/photos/
