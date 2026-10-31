@@ -1,25 +1,48 @@
 // Home board server. Setup: npm install gtfs-realtime-bindings   then: node server.js   (Node 18+)
 // Same approach as your Flask app: GTFS-realtime trip updates + vehicle positions, local static GTFS, fleet list.
-require('dotenv').config();
 const http = require('http'), fs = require('fs'), path = require('path'), readline = require('readline');
 const { transit_realtime } = require('gtfs-realtime-bindings');
+let IcalExpander = null;
+try { IcalExpander = require('ical-expander'); } catch { /* only needed for the calendar: npm install ical-expander */ }
+
+// Load settings from the .env file next to this script (KEY=value on each line, # for comments).
+// Node doesn't read .env files by itself, so without this every process.env.* value below is empty.
+try {
+  for (const line of fs.readFileSync(path.join(__dirname, '.env'), 'utf8').replace(/^\uFEFF/, '').split(/\r?\n/)) {
+    const m = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$/);
+    if (m && process.env[m[1]] === undefined) process.env[m[1]] = m[2].replace(/^(['"])(.*)\1$/, '$2');
+  }
+} catch { console.log('No .env file found next to server.js, using built-in defaults'); }
 
 // ---- Edit these -------------------------------------------------------
 const C = {
   PORT: 3000,
   API_KEY: process.env.TFNSW_API_KEY || '',
-  STOP_IDS: (process.env.STOP_IDS || '2567173,2567200').split(',').map(x => x.trim()),
+  STOP_IDS: (process.env.STOP_IDS || '').split(',').map(x => x.trim()),
   GTFS_DIR: './data/agency_data',
-  FLEET_FILE: process.env.FLEET_FILE || './data/bus_fleet_data.json',
-  PHOTO_DIR: process.env.PHOTO_DIR || './static/photos',
-  LAT: parseFloat(process.env.LAT || '-34.031021'),
-  LON: parseFloat(process.env.LON || '150.747510'),
+  FLEET_FILE: './data/bus_fleet_data.json',
+  PHOTO_DIR: './static/photos',
+  LAT: parseFloat(process.env.LAT),
+  LON: parseFloat(process.env.LON),
   WALK_MINS: 5,
   WIFI_SSID: process.env.WIFI_SSID || 'SSID',
   WIFI_PASS: process.env.WIFI_PASS || 'PASS',
   REFRESH_SECS: 15,
+  CALENDAR_URL: (process.env.CALENDAR_URL || '').replace(/^webcal:/i, 'https:'),   // private iCal address (Google Calendar: Settings > Integrate calendar > Secret address in iCal format)
+  NIGHT: { from: process.env.NIGHT_FROM || '22:30', to: process.env.NIGHT_TO || '05:45', dim: parseFloat(process.env.NIGHT_DIM || '0.35') },   // dim the board between these times (Sydney time)
+  // Morning bus watch: between from and to (Sydney time, on these days: 0=Sun ... 6=Sat) the matching bus
+  // replaces the first stop on the board with a live mini map. Leave route as '' to switch it off.
+  WATCH: { route: process.env.WATCH_ROUTE_ID, stop: process.env.WATCH_STOP_ID, from: '06:40', to: '07:40', days: [1, 2, 3, 4, 5] },   // stop: one of your STOP_IDS, or '' for any
 };
 // -----------------------------------------------------------------------
+
+// Check the settings and say plainly what's wrong, instead of failing quietly later
+C.STOP_IDS = C.STOP_IDS.filter(Boolean);
+if (!C.STOP_IDS.length) { console.log('STOP_IDS is empty. Put STOP_IDS=2567173,2567200 (your stop ids) in the .env file.'); process.exit(1); }
+if (Number.isNaN(C.LAT) || Number.isNaN(C.LON)) console.log('LAT / LON are missing from .env, so the weather will be switched off');
+if (C.WATCH.route && C.WATCH.stop && !C.STOP_IDS.includes(C.WATCH.stop)) {
+  console.log(`Morning bus watch: using its own stop ${C.WATCH.stop}, only route ${C.WATCH.route} will be shown from it`);
+}
 
 const S = { ready: false, stopTimes: [], trips: new Map(), routes: new Map(), services: new Map(), exceptions: new Map(), stops: new Map(), shapes: new Map(), group: new Map(), patterns: new Map(), pstops: new Map() };
 const RT = { byTrip: new Map(), at: 0, entities: 0, error: '' };   // realtime trip updates
@@ -57,7 +80,9 @@ const k = (dir, id) => path.basename(dir) + '|' + id;   // ids are only unique w
 const secs = t => { const [h, m, s] = t.split(':').map(Number); return h * 3600 + m * 60 + s; };
 
 async function loadStatic() {
-  const wanted = new Set(C.STOP_IDS.map(s => s.trim())), tripIds = new Set(), configured = new Set(wanted);
+  const wanted = new Set(C.STOP_IDS.map(s => s.trim())), tripIds = new Set();
+  if (C.WATCH.stop) wanted.add(C.WATCH.stop);   // the watch stop can be a separate stop from your main ones
+  const configured = new Set(wanted);
   const agencies = fs.readdirSync(C.GTFS_DIR).map(a => path.join(C.GTFS_DIR, a)).filter(p => fs.statSync(p).isDirectory());
   // Pass 1: find your stop(s), plus any child platforms whose parent_station is one of them
   for (const dir of agencies) {
@@ -127,7 +152,8 @@ async function loadStatic() {
     for (const [key, pts] of S.shapes) S.shapes.set(key, pts.sort((a, b) => a.seq - b.seq).map(p => [p.lat, p.lon]));
   }
   S.ready = true;
-  console.log(`Static GTFS loaded: ${S.stopTimes.length} stop times, ${S.trips.size} trips, ${S.stops.size} of ${C.STOP_IDS.length} stops found`);
+  console.log(`Static GTFS loaded: ${S.stopTimes.length} stop times, ${S.trips.size} trips, ${S.stops.size} stops`);
+  if (C.WATCH.stop && !S.stops.has(C.WATCH.stop)) console.log(`WATCH_STOP_ID ${C.WATCH.stop} was not found in stops.txt, so the morning bus watch can't show`);
 }
 
 // ---------- realtime feeds ----------
@@ -166,7 +192,14 @@ async function refreshPositions() {
   POS.byTrip = m; POS.at = Date.now(); POS.entities = feed.entity.length; POS.error = '';
 }
 function loop(fn, name) {
-  const run = async () => { try { await fn(); } catch (e) { console.log(name + ' refresh failed:', e.message); (name === 'Realtime' ? RT : POS).error = e.message; } setTimeout(run, C.REFRESH_SECS * 1000); };
+  const run = async () => {
+    let wait = Math.max(5, Number(C.REFRESH_SECS) || 15);   // never faster than every 5 seconds, even if the setting is missing
+    try { await fn(); } catch (e) {
+      console.log(name + ' refresh failed:', e.message); (name === 'Realtime' ? RT : POS).error = e.message;
+      if (String(e.message).includes('429')) wait = 60;      // rate limited, so back off for a minute
+    }
+    setTimeout(run, wait * 1000);
+  };
   run();
 }
 
@@ -216,6 +249,8 @@ function getDepartures() {
     for (const st of S.stopTimes) {
       const trip = S.trips.get(st.trip);
       if (!trip || !serviceActive(trip.service, ymd, dt.getUTCDay())) continue;
+      // a separate watch stop only ever shows the watched route, never its other buses
+      if (!C.STOP_IDS.includes(S.group.get(st.stop) || st.stop) && (S.routes.get(trip.route) || trip.route.split('|')[1]) !== String(C.WATCH.route)) continue;
       const sched = mid + st.dep * 1000;
       D.activeToday++;
       if (sched < now - 3 * 3600000 || sched > now + 3 * 3600000) continue;
@@ -320,12 +355,64 @@ function getTrack(id, stopId, mid) {
   };
 }
 
+// ---------- calendar (private iCal link: set CALENDAR_URL in .env) ----------
+const CAL = { at: 0, events: [], error: '' };
+const pad2 = n => String(n).padStart(2, '0');
+const sydDay = d => new Intl.DateTimeFormat('en-CA', { timeZone: 'Australia/Sydney' }).format(d);   // YYYY-MM-DD
+async function refreshCalendar() {
+  if (!C.CALENDAR_URL) return;
+  if (!IcalExpander) throw new Error('Calendar needs: npm install ical-expander');
+  const r = await fetch(C.CALENDAR_URL);
+  if (!r.ok) throw new Error('Calendar responded ' + r.status);
+  const ex = new IcalExpander({ ics: await r.text(), maxIterations: 1000 });   // expands repeating events too
+  const now = Date.now(), today = sydDay(new Date()), out = [];
+  const add = (sd, ed, title) => {
+    if (sd.isDate) {   // all-day event; the end date is exclusive
+      const day = `${sd.year}-${pad2(sd.month)}-${pad2(sd.day)}`, endDay = `${ed.year}-${pad2(ed.month)}-${pad2(ed.day)}`;
+      if (endDay <= today) return;
+      out.push({ title, allDay: true, day: day < today ? today : day, start: null });
+    } else {
+      const s = sd.toJSDate(), e = ed.toJSDate();
+      if (e.getTime() <= now) return;
+      out.push({ title, allDay: false, day: sydDay(s) < today ? today : sydDay(s), start: s.toISOString() });
+    }
+  };
+  const res = ex.between(new Date(now - 24 * 3600000), new Date(now + 8 * 24 * 3600000));
+  res.events.forEach(e => add(e.startDate, e.endDate, e.summary));
+  res.occurrences.forEach(o => add(o.startDate, o.endDate, o.item.summary));
+  out.sort((a, b) => a.day.localeCompare(b.day) || (b.allDay - a.allDay) || String(a.start).localeCompare(String(b.start)));
+  CAL.events = out.slice(0, 20); CAL.at = Date.now(); CAL.error = '';
+}
+(async function calLoop() {
+  try { await refreshCalendar(); } catch (e) { CAL.error = e.message; console.log('Calendar refresh failed:', e.message); }
+  setTimeout(calLoop, 10 * 60 * 1000);
+})();
+
+// ---------- internet check (pings a connectivity-check address every 30s) ----------
+const NET = { history: [], up: null, since: Date.now() };
+async function netCheck() {
+  let ms = null;
+  for (const url of ['https://www.gstatic.com/generate_204', 'https://cp.cloudflare.com/generate_204']) {
+    const t0 = Date.now();
+    try { const r = await fetch(url, { signal: AbortSignal.timeout(4000), cache: 'no-store' }); if (r.ok) { ms = Date.now() - t0; break; } } catch { /* try the next one */ }
+  }
+  const up = ms !== null;
+  if (NET.up !== up) { NET.up = up; NET.since = Date.now(); }
+  NET.history.push(ms); if (NET.history.length > 120) NET.history.shift();   // last hour
+  setTimeout(netCheck, 30000);
+}
+function getNet() {
+  const h = NET.history, ok = h.filter(x => x !== null).length;
+  return { up: NET.up, ms: h[h.length - 1], since: NET.since, history: h, uptimePct: h.length ? Math.round(100 * ok / h.length) : null, windowMins: Math.round(h.length / 2) };
+}
+netCheck();
+
 // ---------- server ----------
 const send = (res, obj) => { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(obj)); };
 http.createServer((req, res) => {
   try {
     if (req.url === '/api/config') {
-      send(res, { lat: C.LAT, lon: C.LON, walk: C.WALK_MINS, ssid: C.WIFI_SSID, pass: C.WIFI_PASS, wifi: `WIFI:T:WPA;S:${C.WIFI_SSID};P:${C.WIFI_PASS};;` });
+      send(res, { lat: C.LAT, lon: C.LON, walk: C.WALK_MINS, watch: C.WATCH, night: C.NIGHT, hasCalendar: !!C.CALENDAR_URL, ssid: C.WIFI_SSID, pass: C.WIFI_PASS, wifi: `WIFI:T:WPA;S:${C.WIFI_SSID};P:${C.WIFI_PASS};;` });
     } else if (req.url.startsWith('/photos/')) {
       const name = path.basename(decodeURIComponent(req.url.slice(8).split('?')[0])), file = path.resolve(C.PHOTO_DIR, name);
       if (!fs.existsSync(file)) { res.statusCode = 404; return res.end(); }
@@ -335,12 +422,17 @@ http.createServer((req, res) => {
     } else if (req.url.startsWith('/api/track')) {
       const q = new URL(req.url, 'http://x').searchParams;
       send(res, getTrack(q.get('trip'), q.get('stop'), q.get('mid')));
+    } else if (req.url === '/api/calendar') {
+      send(res, { events: CAL.events, error: CAL.error, at: CAL.at });
+    } else if (req.url === '/api/net') {
+      send(res, getNet());
     } else if (req.url === '/api/debug') {
       send(res, getDebug());
     } else if (req.url === '/api/buses') {
       if (!S.ready) { res.statusCode = 503; return send(res, { error: 'Static GTFS still loading (or folder not found)' }); }
       if (!RT.at) { res.statusCode = 503; return send(res, { error: 'Waiting for first realtime update' }); }
-      send(res, { stops: C.STOP_IDS.map(id => ({ id: id.trim(), name: S.stops.get(id.trim())?.name || id.trim() })), departures: getDepartures() });
+      const ws = C.WATCH.stop && !C.STOP_IDS.includes(C.WATCH.stop) ? { id: C.WATCH.stop, name: S.stops.get(C.WATCH.stop)?.name || C.WATCH.stop } : null;
+      send(res, { stops: C.STOP_IDS.map(id => ({ id: id.trim(), name: S.stops.get(id.trim())?.name || id.trim() })), watchStop: ws, departures: getDepartures() });
     } else {
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.end(fs.readFileSync(path.join(__dirname, 'index.html')));

@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "gtfs-realtime-bindings": "^2.2.0"
+    "gtfs-realtime-bindings": "^0.0.6",
+    "ical-expander": "^3.2.0"
   }
 }

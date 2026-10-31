@@ -97,22 +97,76 @@ h2{margin:0 0 16px;font-size:22px;font-weight:600;color:var(--dim)}
 .pd{font-size:16px;font-weight:600;text-align:right} .pd.late{color:var(--hurry)} .pd.early{color:var(--bus)}
 .pbus{display:flex;align-items:center;gap:10px;padding:6px 0;color:var(--bus);font-weight:600;font-size:19px;position:relative}
 .pbus .busdot{width:36px;height:36px;border-width:3px;font-size:15px}
+.watch h2{color:var(--go)}
+.watch .wcard{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px;border-left:6px solid var(--go);padding-left:14px;cursor:pointer}
+.watch.hurry .wcard{border-color:var(--hurry)} .watch.miss .wcard{border-color:var(--miss)}
+#wmap{border-radius:12px;min-height:0;background:#0d1821}
+.wbody{display:flex;flex-direction:column;justify-content:center;min-width:0}
+.wtop{display:flex;align-items:baseline;gap:14px}
+.wrt{font:700 64px/1 var(--num);color:var(--bus)}
+.wdest{font-size:24px;line-height:1.15}
+.wmins{font:700 120px/1 var(--num);margin-top:6px}
+.wmins small{font-size:32px;color:var(--dim);margin-left:6px}
+.watch.hurry .wmins{color:var(--hurry)} .watch.miss .wmins{color:var(--miss)}
+.winfo{color:var(--dim);font-size:20px;margin-top:8px}
+/* home panel extras */
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
+.clock{font-size:96px}
+.date{margin:2px 0 12px;font-size:22px}
+.wx{padding-top:12px} .wx .t{font-size:60px} .wx .d{font-size:24px}
+.wx-sub{font-size:18px;line-height:1.35;margin:6px 0 0}
+.rainline{margin:6px 0 0;font-size:20px;color:var(--bus)}
+.hours{display:flex;gap:6px;margin-top:10px}
+.hr{flex:1;min-width:0;text-align:center;background:#101d28;border-radius:12px;padding:8px 2px}
+.hl{font-size:15px;color:var(--dim)}
+.hi{width:30px;height:30px;margin:4px auto} .hi svg{width:100%;height:100%}
+.ht{font:700 24px var(--num)}
+.hp{height:22px;width:10px;margin:6px auto 2px;background:var(--line);border-radius:3px;position:relative;overflow:hidden}
+.hp i{position:absolute;left:0;right:0;bottom:0;background:var(--bus)}
+.hq{font-size:13px;color:var(--dim);height:16px}
+.cal{flex:1;min-height:0;overflow-y:auto;margin-top:12px;border-top:1px solid var(--line);padding-top:10px;touch-action:pan-y;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.cal[hidden]{display:none}
+.cal h3{margin:8px 0 4px;font-size:16px;font-weight:600;color:var(--go)}
+.cal ul{list-style:none;margin:0;padding:0}
+.cal li{display:grid;grid-template-columns:84px 1fr;gap:10px;font-size:20px;padding:2px 0}
+.ct{font-family:var(--num);font-weight:600;color:var(--dim);font-size:22px}
+.bottom{margin-top:auto;display:flex;gap:16px;align-items:center;border-top:1px solid var(--line);padding-top:14px}
+.bottom .wifi{margin:0;border:0;padding:0;flex-direction:column;gap:6px;text-align:center;width:150px;flex:none}
+.bottom #qr{width:112px;height:112px;margin:0 auto}
+.wifi b{font-size:18px} .wifi p{font-size:13px}
+.radar{position:relative;flex:1;height:200px;border-radius:12px;overflow:hidden;cursor:pointer}
+#rmap{position:absolute;inset:0;background:#0d1821}
+.rlabel{position:absolute;left:8px;bottom:6px;z-index:500;font-size:14px;background:#0d1821cc;padding:2px 8px;border-radius:6px}
+#radarclose{position:absolute;right:12px;top:12px;z-index:600;font:600 24px var(--body);padding:12px 28px;border:0;border-radius:12px;background:var(--line);color:var(--text)}
+.radar.big{position:fixed;inset:16px;z-index:1000;height:auto;border-radius:20px;cursor:default}
+.net{text-align:right;flex:none}
+.netline{display:flex;align-items:center;justify-content:flex-end;gap:8px;font-size:20px;font-weight:600}
+.ndot{width:14px;height:14px;border-radius:50%;background:var(--dim)} .ndot.up{background:var(--go)} .ndot.down{background:var(--miss)}
+#nspark{width:170px;height:36px;display:block;margin:6px 0 2px auto}
+.nsub{font-size:14px;color:var(--dim)}
+.full .hl{font-size:18px} .full .ht{font-size:32px} .full .radar{height:320px} .full .bottom #qr{width:240px;height:240px}
+body.night{background:#000}
+body.night .panel{filter:brightness(var(--nightdim,.35));background:#080c10}
+body.night .hide-night,body.night .hours,body.night .rainline{display:none}
+body.night .clock{font-size:170px}
 .dbgbox{margin:12px 0 0;max-height:34vh;overflow:auto;font:13px/1.35 Consolas,monospace;color:var(--dim);background:#0d1821;border-radius:10px;padding:10px;white-space:pre-wrap}
 .row .dest .dbg{font:13px/1.3 Consolas,monospace;color:#6f8696}
 </style>
 </head>
 <body>
 <section class="panel" id="home">
-  <div class="clock" id="clock">--:--</div>
-  <div class="date" id="date"></div>
-  <div class="wx">
-    <div class="t" id="wx-t">--</div>
-    <div class="d" id="wx-d">Loading weather</div>
+  <div class="top">
+    <div><div class="clock" id="clock">--:--</div><div class="date" id="date"></div></div>
+    <div class="net"><div class="netline"><span class="ndot" id="ndot"></span><span id="ntext">Internet</span></div><svg id="nspark" viewBox="0 0 160 36" preserveAspectRatio="none"></svg><div class="nsub" id="nsub"></div></div>
   </div>
+  <div class="wx"><div class="t" id="wx-t">--</div><div class="d" id="wx-d">Loading weather</div></div>
   <p class="wx-sub" id="wx-sub"></p>
-  <div class="wifi">
-    <div id="qr"></div>
-    <div><b id="ssid"></b><p id="pass"></p><p>Scan to join the wifi</p></div>
+  <p class="rainline" id="rainline"></p>
+  <div class="hours" id="hours"></div>
+  <div class="cal hide-night" id="cal" hidden></div>
+  <div class="bottom hide-night">
+    <div class="radar" id="radar"><div id="rmap"></div><div class="rlabel" id="rlabel"></div><button id="radarclose" hidden>Close</button></div>
+    <div class="wifi"><div id="qr"></div><div><b id="ssid"></b><p id="pass"></p><p>Scan to join</p></div></div>
   </div>
 </section>
 
@@ -142,7 +196,7 @@ const $ = s => document.querySelector(s);
 const WX = {0:'Clear',1:'Mostly clear',2:'Partly cloudy',3:'Cloudy',45:'Fog',48:'Fog',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',
   61:'Light rain',63:'Rain',65:'Heavy rain',71:'Snow',80:'Showers',81:'Showers',82:'Heavy showers',95:'Thunderstorm',96:'Thunderstorm',99:'Thunderstorm'};
 const DEBUG = location.search.includes('debug');
-let cfg = { walk: 5 }, busData = [], busStops = [], lastBusHtml = '', busOk = 0, busErr = '';
+let cfg = { walk: 5 }, busData = [], busStops = [], busWatch = null, lastBusHtml = '', busOk = 0, busErr = '';
 
 // Tap a panel to make it fullscreen, tap again to go back. Returns to the split view after 60s of no touches.
 let idle;
@@ -178,16 +232,21 @@ function renderBuses() {
   const box = $('#buses');
   box.style.gridTemplateRows = `repeat(${stops.length}, minmax(0, 1fr))`;
   box.classList.toggle('multi', stops.length > 1);
-  const html = stops.map(s => {
+  const w = watchRow(rows);
+  const html = (w ? stops.slice(1) : stops).map(s => {
     const mine = rows.filter(b => stops.length === 1 || b.group === s.id);
     const title = !s.id || s.name === s.id ? s.name : `${s.name} (${s.id})`;
     return `<div class="col"><h2>${esc(title)}</h2><ul class="buses">${mine.length ? mine.map(rowHtml).join('') : '<li class="empty">No upcoming departures</li>'}</ul></div>`;
   }).join('');
-  if (html !== lastBusHtml) {   // only redraw when something changed, so scrolling isn't reset
+  const key = (w ? 'w|' : '') + html;
+  if (key !== lastBusHtml) {   // only redraw when something changed, so scrolling isn't reset
+    const same = lastBusHtml.startsWith('w|') === !!w;
     const scroll = [...box.querySelectorAll('.buses')].map(u => u.scrollTop);
-    box.innerHTML = html; lastBusHtml = html;
-    box.querySelectorAll('.buses').forEach((u, i) => { u.scrollTop = scroll[i] || 0; });
+    box.innerHTML = html; lastBusHtml = key;
+    if (w) box.prepend(watchEl);
+    box.querySelectorAll('.buses').forEach((u, i) => { u.scrollTop = same ? scroll[i] || 0 : 0; });
   }
+  if (w) updateWatch(w, stops); else stopWatch();
   const age = busOk ? Math.round((now - busOk) / 1000) : null;
   const st = $('#bus-status');
   if (age === null) { st.textContent = busErr || 'Waiting for first update'; st.className = 'status warn'; }
@@ -199,7 +258,7 @@ async function loadBuses() {
   try {
     const r = await fetch('/api/buses');
     if (!r.ok) throw new Error((await r.json()).error || r.status);
-    const j = await r.json(); busData = j.departures; busStops = j.stops; busOk = Date.now(); busErr = '';
+    const j = await r.json(); busData = j.departures; busStops = j.stops; busWatch = j.watchStop; busOk = Date.now(); busErr = '';
   } catch (e) { busErr = 'Could not reach TfNSW: ' + e.message; }
   renderBuses();
 }
@@ -209,15 +268,38 @@ async function loadDebug() {
   catch (e) { $('#dbg').textContent = 'Debug fetch failed: ' + e.message; }
 }
 
+function wxIcon(code, day = 1) {
+  const sun = '<circle cx="16" cy="16" r="5"/><path d="M16 4v3M16 25v3M4 16h3M25 16h3M7.5 7.5l2 2M22.5 22.5l2 2M7.5 24.5l2-2M22.5 9.5l2-2"/>';
+  const moon = '<path d="M21 6a10 10 0 1 0 5 16 8 8 0 0 1-5-16z"/>';
+  const cloud = '<path d="M9 22h14a5 5 0 0 0 0-10 7 7 0 0 0-13.5-1.5A5 5 0 0 0 9 22z"/>';
+  const body = code === 0 ? (day ? sun : moon)
+    : code <= 2 ? `<g transform="translate(-6 -7) scale(.65)">${day ? sun : moon}</g><g transform="translate(1 2)">${cloud}</g>`
+    : code === 3 ? cloud
+    : code <= 48 ? '<path d="M5 11h22M8 17h16M5 23h22"/>'
+    : code >= 95 ? cloud + '<path d="M17 23l-4 5h5l-2 3"/>'
+    : (code >= 71 && code <= 77) || code === 85 || code === 86 ? cloud + '<path d="M11 26h.01M17 26h.01M23 26h.01M14 30h.01M20 30h.01" stroke-width="3"/>'
+    : cloud + '<path d="M11 25l-1.5 4M17 25l-1.5 4M23 25l-1.5 4"/>';
+  return `<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
+}
 async function loadWeather() {
   try {
     const u = `https://api.open-meteo.com/v1/forecast?latitude=${cfg.lat}&longitude=${cfg.lon}` +
-      '&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m' +
-      '&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto';
-    const j = await (await fetch(u)).json(), c = j.current, d = j.daily;
+      '&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,is_day' +
+      '&hourly=temperature_2m,precipitation_probability,weather_code,is_day' +
+      '&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max&timezone=auto&forecast_days=2';
+    const j = await (await fetch(u)).json(), c = j.current, d = j.daily, h = j.hourly;
     $('#wx-t').textContent = Math.round(c.temperature_2m) + '°';
     $('#wx-d').textContent = WX[c.weather_code] || 'Weather';
-    $('#wx-sub').textContent = `Feels ${Math.round(c.apparent_temperature)}°, high ${Math.round(d.temperature_2m_max[0])}° low ${Math.round(d.temperature_2m_min[0])}°, rain ${d.precipitation_probability_max[0]}%, wind ${Math.round(c.wind_speed_10m)} km/h`;
+    const hm = s => s.slice(11, 16);
+    $('#wx-sub').innerHTML = `Feels ${Math.round(c.apparent_temperature)}°, high ${Math.round(d.temperature_2m_max[0])}° low ${Math.round(d.temperature_2m_min[0])}°, wind ${Math.round(c.wind_speed_10m)} km/h<br>Sunrise ${hm(d.sunrise[0])}, sunset ${hm(d.sunset[0])}, UV up to ${Math.round(d.uv_index_max[0])}`;
+    const i0 = Math.max(0, h.time.findIndex(t => t >= c.time.slice(0, 13) + ':00'));
+    const lab = (t, i) => { if (i === 0) return 'Now'; const hr = +t.slice(11, 13); return (hr % 12 || 12) + (hr < 12 ? 'am' : 'pm'); };
+    $('#hours').innerHTML = h.time.slice(i0, i0 + 8).map((t, i) => {
+      const k = i0 + i, p = h.precipitation_probability[k] || 0;
+      return `<div class="hr"><div class="hl">${lab(t, i)}</div><div class="hi">${wxIcon(h.weather_code[k], h.is_day[k])}</div><div class="ht">${Math.round(h.temperature_2m[k])}°</div><div class="hp"><i style="height:${p}%"></i></div><div class="hq">${p >= 10 ? p + '%' : ''}</div></div>`;
+    }).join('');
+    const wet = h.time.slice(i0, i0 + 12).findIndex((t, i) => (h.precipitation_probability[i0 + i] || 0) >= 50);
+    $('#rainline').textContent = wet === -1 ? 'No rain expected for the next 12 hours' : wet === 0 ? 'Rain likely now' : `Rain likely from ${lab(h.time[i0 + wet], wet)}`;
   } catch (e) { $('#wx-d').textContent = 'Weather unavailable'; }
 }
 
@@ -258,6 +340,64 @@ async function refreshMap(first) {
   if (first || !map.getBounds().contains(ll)) map.fitBounds([ll, stopLL], { padding: [70, 70], maxZoom: 16 });
   $('#mapfoot').textContent = [`${v.speed} km/h`, v.ageSecs != null ? `position updated ${v.ageSecs}s ago` : ''].filter(Boolean).join(', ');
 }
+// ---- Morning bus watch: in the time window, your bus replaces the first stop with a live mini map ----
+const watchEl = document.createElement('div');
+watchEl.className = 'col watch';
+watchEl.innerHTML = '<h2 id="whead"></h2><div class="wcard"><div id="wmap"></div><div class="wbody"><div class="wtop"><span class="wrt"></span><span class="wdest"></span></div><div class="wmins"></div><div class="winfo"></div></div></div>';
+const wq = s => watchEl.querySelector(s);
+let wmap, wBus, wDrawn = false, watchTrip = null, watchStop = '', watchMid = '', watchTimer;
+function inWatchWindow(w) {
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone: 'Australia/Sydney', weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date()).map(x => [x.type, x.value]));
+  const day = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(p.weekday), mins = +p.hour * 60 + +p.minute;
+  const [fh, fm] = w.from.split(':').map(Number), [th, tm] = w.to.split(':').map(Number);
+  return (!w.days || w.days.includes(day)) && mins >= fh * 60 + fm && mins <= th * 60 + tm;
+}
+function watchRow(rows) {   // add ?watchtest to the address to ignore the time window while testing
+  const w = cfg.watch;
+  if (!w || !w.route || !(location.search.includes('watchtest') || inWatchWindow(w))) return null;
+  return rows.find(b => b.route === String(w.route) && (!w.stop || b.group === w.stop)) || null;
+}
+function updateWatch(w, stops) {
+  const s = stops.find(x => x.id === w.group) || (busWatch && busWatch.id === w.group ? busWatch : { id: w.group, name: w.group });
+  const cls = w.m < cfg.walk ? 'miss' : w.m < cfg.walk + 3 ? 'hurry' : '';
+  watchEl.classList.remove('miss', 'hurry'); if (cls) watchEl.classList.add(cls);
+  wq('#whead').textContent = 'Your bus: ' + (s.name === s.id ? s.name : `${s.name} (${s.id})`);
+  wq('.wrt').textContent = w.route; wq('.wdest').textContent = w.dest;
+  wq('.wmins').innerHTML = w.m === 0 ? 'Now' : `${w.m}<small>min</small>`;
+  wq('.winfo').textContent = w.info || '';
+  if (!wmap && window.L) {
+    wmap = L.map(wq('#wmap'), { zoomControl: false, dragging: false, touchZoom: false, scrollWheelZoom: false, doubleClickZoom: false, boxZoom: false, keyboard: false });
+    wmap.attributionControl.setPrefix(false);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(wmap);
+    wmap.setView([-33.9, 151.0], 10);
+  }
+  if (wmap) wmap.invalidateSize();
+  if (watchTrip !== w.trip) {
+    watchTrip = w.trip; watchStop = w.stopId; watchMid = w.mid; wDrawn = false; wBus = null;
+    if (wmap) wmap.eachLayer(l => { if (!(l instanceof L.TileLayer)) wmap.removeLayer(l); });
+    clearInterval(watchTimer); watchTimer = setInterval(refreshWatchMap, 5000); refreshWatchMap();
+  }
+}
+function stopWatch() { clearInterval(watchTimer); watchTrip = null; }
+async function refreshWatchMap() {
+  if (!watchTrip || !wmap) return;
+  let j;
+  try { j = await (await fetch(`/api/track?trip=${encodeURIComponent(watchTrip)}&stop=${encodeURIComponent(watchStop)}&mid=${encodeURIComponent(watchMid)}`)).json(); } catch (e) { return; }
+  if (!watchTrip || j.error) return;
+  const stopLL = [j.stop.lat, j.stop.lon], v = j.vehicle;
+  if (!wDrawn) {
+    if (j.shape.length) L.polyline(j.shape, { color: '#00b5ef', weight: 5, opacity: 0.8 }).addTo(wmap);
+    L.circleMarker(stopLL, { radius: 9, color: '#fff', weight: 3, fillColor: '#7bd88f', fillOpacity: 1 }).addTo(wmap);
+    wDrawn = true;
+  }
+  if (!v) { wmap.setView(stopLL, 15, { animate: false }); return; }
+  const ll = [v.lat, v.lon];
+  if (!wBus) wBus = L.marker(ll, { icon: L.divIcon({ className: '', html: `<div class="busdot" style="width:44px;height:44px;font-size:18px">${esc(j.route)}</div>`, iconSize: [44, 44] }) }).addTo(wmap);
+  else wBus.setLatLng(ll);
+  wmap.fitBounds([ll, stopLL], { padding: [30, 30], maxZoom: 16, animate: false });
+}
+watchEl.addEventListener('click', e => { e.stopPropagation(); if (watchTrip) openMap(watchTrip, watchStop, watchMid); });
+
 const hhmm = iso => new Date(iso).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Australia/Sydney' });
 function renderSide(j, first) {
   const b = j.bus, v = j.vehicle, rows = j.pattern || [], ph = $('#busphoto');
@@ -291,6 +431,100 @@ $('#buses').addEventListener('click', e => {
   e.stopPropagation(); openMap(li.dataset.trip, li.dataset.stop, li.dataset.mid);
 });
 
+// ---- rain radar (RainViewer past-2-hours frames over a dark map; tap to go fullscreen) ----
+let rmap, rFrames = [], rLayers = [], rIdx = 0, rTimer, rBig = false, rIdle;
+async function loadRadar() {
+  if (!window.L || !cfg.lat) return;
+  let j;
+  try { j = await (await fetch('https://api.rainviewer.com/public/weather-maps.json')).json(); } catch (e) { return; }
+  const frames = (j.radar && j.radar.past) || [];
+  if (!frames.length) return;
+  const home = [cfg.lat, cfg.lon];
+  if (!rmap) {
+    rmap = L.map('rmap', { zoomControl: false, attributionControl: false, center: home, zoom: 7, minZoom: 4, maxZoom: 9 });
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(rmap);
+    rmap.createPane('radar').style.zIndex = 250;
+    L.circleMarker(home, { radius: 6, color: '#fff', weight: 2, fillColor: '#7bd88f', fillOpacity: 1 }).addTo(rmap);
+    setRadarInteractive(false);
+  }
+  rLayers.forEach(l => rmap.removeLayer(l));
+  rFrames = frames;
+  rLayers = frames.map(f => L.tileLayer(`${j.host}${f.path}/256/{z}/{x}/{y}/2/1_1.png`, { pane: 'radar', opacity: 0, maxNativeZoom: 7, maxZoom: 9 }).addTo(rmap));
+  rIdx = 0; clearTimeout(rTimer); stepRadar();
+}
+function stepRadar() {
+  if (document.body.classList.contains('night')) { rTimer = setTimeout(stepRadar, 5000); return; }
+  rLayers.forEach((l, i) => l.setOpacity(i === rIdx ? 0.75 : 0));
+  const last = rIdx === rFrames.length - 1;
+  $('#rlabel').textContent = `Rain radar ${hhmm(rFrames[rIdx].time * 1000)}${last ? ' (latest)' : ''}, RainViewer`;
+  rIdx = last ? 0 : rIdx + 1;
+  rTimer = setTimeout(stepRadar, last ? 2200 : 600);
+}
+function setRadarInteractive(on) {
+  ['dragging', 'touchZoom', 'doubleClickZoom', 'scrollWheelZoom', 'boxZoom', 'keyboard'].forEach(k => rmap[k][on ? 'enable' : 'disable']());
+}
+function bigRadar(on) {
+  rBig = on;
+  $('#radar').classList.toggle('big', on); $('#radarclose').hidden = !on;
+  setRadarInteractive(on);
+  setTimeout(() => { rmap.invalidateSize(); rmap.setView([cfg.lat, cfg.lon], 7, { animate: false }); }, 50);
+  clearTimeout(rIdle); if (on) rIdle = setTimeout(() => bigRadar(false), 120000);
+}
+$('#radar').addEventListener('click', e => { e.stopPropagation(); if (!rBig && rmap) bigRadar(true); });
+$('#radarclose').addEventListener('click', e => { e.stopPropagation(); bigRadar(false); });
+
+// ---- calendar (from the server, which reads your private iCal link) ----
+async function loadCalendar() {
+  let j;
+  try { j = await (await fetch('/api/calendar')).json(); } catch (e) { return; }
+  const box = $('#cal'); box.hidden = false;
+  if (j.error && !j.events.length) { box.innerHTML = `<h3>Calendar</h3><div class="empty">${esc(j.error)}</div>`; return; }
+  const key = d => new Intl.DateTimeFormat('en-CA', { timeZone: 'Australia/Sydney' }).format(d);
+  const today = key(new Date()), tomorrow = key(new Date(Date.now() + 86400000));
+  const label = day => day === today ? 'Today' : day === tomorrow ? 'Tomorrow' : new Date(day + 'T12:00:00Z').toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'short', timeZone: 'UTC' });
+  const groups = {};
+  j.events.forEach(e => (groups[e.day] = groups[e.day] || []).push(e));
+  const days = Object.keys(groups).sort();
+  box.innerHTML = days.length
+    ? days.map(d => `<h3>${label(d)}</h3><ul>${groups[d].map(e => `<li><span class="ct">${e.allDay ? 'All day' : hhmm(e.start)}</span><span>${esc(e.title)}</span></li>`).join('')}</ul>`).join('')
+    : '<div class="empty">Nothing on the calendar this week</div>';
+}
+
+// ---- internet status (dot, response time, last hour as a line) ----
+async function loadNet() {
+  let j;
+  try { j = await (await fetch('/api/net')).json(); }
+  catch (e) { $('#ndot').className = 'ndot down'; $('#ntext').textContent = 'Board server offline'; return; }
+  $('#ndot').className = 'ndot ' + (j.up === false ? 'down' : j.up ? 'up' : '');
+  $('#ntext').textContent = j.up === false ? 'Internet down' : j.up ? `Internet ${j.ms} ms` : 'Internet';
+  $('#nsub').textContent = j.up === false ? `Down since ${hhmm(j.since)}` : j.uptimePct != null ? `${j.uptimePct}% up, last ${j.windowMins} min` : '';
+  const hist = j.history, n = hist.length, cap = Math.max(200, ...hist.filter(v => v !== null));
+  const x = i => n > 1 ? 1 + (i / (n - 1)) * 158 : 1;
+  let path = '', ticks = '';
+  hist.forEach((v, i) => {
+    if (v === null) { ticks += `<rect x="${(x(i) - 1).toFixed(1)}" y="2" width="3" height="32" fill="#e0675c"/>`; return; }
+    path += (i === 0 || hist[i - 1] === null ? 'M' : 'L') + x(i).toFixed(1) + ' ' + (33 - Math.min(v, cap) / cap * 28).toFixed(1);
+  });
+  $('#nspark').innerHTML = `<path d="${path}" fill="none" stroke="#00b5ef" stroke-width="2"/>${ticks}`;
+}
+
+// ---- night mode: dims the board and drops it to a big clock; a touch wakes it for a minute ----
+let nightWake = 0;
+function isNightTime() {
+  const n = cfg.night;
+  if (!n) return false;
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone: 'Australia/Sydney', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date()).map(x => [x.type, x.value]));
+  const m = +p.hour * 60 + +p.minute, f = n.from.split(':').map(Number), t = n.to.split(':').map(Number), a = f[0] * 60 + f[1], b = t[0] * 60 + t[1];
+  return a > b ? (m >= a || m < b) : (m >= a && m < b);
+}
+function applyNight() {
+  const was = document.body.classList.contains('night'), now = isNightTime() && Date.now() > nightWake;
+  document.body.style.setProperty('--nightdim', (cfg.night && cfg.night.dim) || 0.35);
+  document.body.classList.toggle('night', now);
+  if (was && !now && rmap) setTimeout(() => rmap.invalidateSize(), 100);
+}
+document.addEventListener('pointerdown', () => { if (isNightTime()) { nightWake = Date.now() + 60000; applyNight(); setTimeout(applyNight, 60500); } });
+
 (async function init() {
   tickClock(); setInterval(tickClock, 1000);
   try { cfg = await (await fetch('/api/config')).json(); } catch (e) {}
@@ -298,7 +532,10 @@ $('#buses').addEventListener('click', e => {
   if (window.QRCode && cfg.wifi) new QRCode($('#qr'), { text: cfg.wifi, width: 260, height: 260 });
   if (DEBUG) { loadDebug(); setInterval(loadDebug, 10000); } else $('#dbg').remove();
   loadBuses(); setInterval(loadBuses, 30000); setInterval(renderBuses, 5000);
-  if (cfg.lat) { loadWeather(); setInterval(loadWeather, 600000); }
+  if (cfg.lat) { loadWeather(); setInterval(loadWeather, 600000); loadRadar(); setInterval(loadRadar, 300000); }
+  if (cfg.hasCalendar) { loadCalendar(); setInterval(loadCalendar, 600000); }
+  loadNet(); setInterval(loadNet, 30000);
+  applyNight(); setInterval(applyNight, 15000);
 })();
 </script>
 </body>
