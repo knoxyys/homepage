@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home board</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&family=Barlow+Condensed:wght@600;700&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<style>
+:root{
+  --bg:#0d1821; --panel:#14232f; --line:#22384a; --text:#eef3f1; --dim:#8fa5b3;
+  --bus:#00b5ef; --go:#7bd88f; --hurry:#f5b942; --miss:#e0675c;
+  --num:"Barlow Condensed","Arial Narrow",sans-serif;
+  --body:"Barlow","Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);font-family:var(--body);display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:16px;user-select:none;cursor:default}
+.panel{background:var(--panel);border-radius:20px;padding:28px 32px;overflow:hidden;display:flex;flex-direction:column;min-height:0}
+body.has-full{grid-template-columns:1fr}
+body.has-full .panel:not(.full){display:none}
+h2{margin:0 0 16px;font-size:22px;font-weight:600;color:var(--dim)}
+
+/* Home panel */
+.clock{font-family:var(--num);font-size:112px;line-height:1;font-weight:700}
+.date{font-size:24px;color:var(--dim);margin:4px 0 28px}
+.wx{display:flex;align-items:baseline;gap:20px;border-top:1px solid var(--line);padding-top:24px}
+.wx .t{font-family:var(--num);font-size:72px;font-weight:700;line-height:1}
+.wx .d{font-size:26px}
+.wx-sub{color:var(--dim);font-size:20px;margin:8px 0 0}
+.wifi{margin-top:auto;display:flex;gap:20px;align-items:center;border-top:1px solid var(--line);padding-top:24px}
+#qr{background:#fff;padding:8px;border-radius:10px;width:140px;height:140px;flex:none}
+#qr img,#qr canvas{width:100%!important;height:100%!important}
+.wifi b{font-size:26px;font-weight:600}
+.wifi p{margin:4px 0 0;color:var(--dim);font-size:20px}
+.full .clock{font-size:200px}
+.full #qr{width:260px;height:260px}
+
+/* Bus panel */
+.buses{list-style:none;margin:0;padding:0 6px 0 0;display:flex;flex-direction:column;gap:10px;flex:1;min-height:0;overflow-y:auto;touch-action:pan-y;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.buses .row{flex:none}
+.row{display:grid;grid-template-columns:96px 1fr auto;align-items:center;gap:20px;border-left:6px solid var(--go);padding:6px 0 6px 18px}
+.row .rt{font-family:var(--num);font-size:44px;font-weight:700;color:var(--bus)}
+.row .dest{font-size:26px;line-height:1.15}
+.row .dest small{display:block;color:var(--dim);font-size:18px;margin-top:2px}
+.row .mins{font-family:var(--num);font-size:84px;font-weight:700;line-height:1;text-align:right}
+.row .mins small{font-size:28px;font-weight:600;color:var(--dim);margin-left:4px}
+.row.hurry{border-color:var(--hurry)} .row.hurry .mins{color:var(--hurry)}
+.row.miss{border-color:var(--miss);opacity:.55} .row.miss .mins{color:var(--miss)}
+.status{color:var(--dim);font-size:18px;margin-top:12px}
+.status.warn{color:var(--hurry)}
+.empty{color:var(--dim);font-size:24px}
+.stops{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;flex:1;min-height:0}
+.col{display:flex;flex-direction:column;min-height:0;min-width:0}
+.col+.col{border-top:1px solid var(--line);padding-top:12px}
+.multi h2{font-size:20px;margin:0 0 8px}
+.multi .row{grid-template-columns:64px 1fr auto;gap:14px;padding:2px 0 2px 14px;border-left-width:5px}
+.multi .row .rt{font-size:34px}
+.multi .row .mins{font-size:52px}
+.multi .row .mins small{font-size:18px}
+.multi .row .dest{font-size:20px}
+.multi .row .dest small{font-size:14px}
+.full .multi .row{grid-template-columns:84px 1fr auto}
+.full .multi .row .rt{font-size:44px}
+.full .multi .row .mins{font-size:68px}
+.full .multi .row .dest{font-size:26px}
+.full .multi .row .dest small{font-size:18px}
+.row{cursor:pointer}
+#mapwrap{position:fixed;inset:16px;background:var(--panel);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:12px;z-index:1000}
+#mapwrap[hidden]{display:none}
+.maphead{display:flex;justify-content:space-between;align-items:center;font-size:30px;font-weight:600}
+#mapclose{font:600 24px var(--body);padding:14px 32px;border:0;border-radius:12px;background:var(--line);color:var(--text)}
+#map{flex:1;border-radius:12px;min-height:0;background:#0d1821}
+.leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}
+.busdot{width:54px;height:54px;border-radius:50%;background:var(--bus);color:#04202c;border:4px solid #fff;display:flex;align-items:center;justify-content:center;font:700 22px var(--num)}
+.mapfoot{color:var(--dim);font-size:22px}
+.mapbody{flex:1;display:flex;gap:16px;min-height:0}
+#map{min-width:0}
+#side{width:440px;flex:none;display:flex;flex-direction:column;gap:12px;min-height:0}
+@media (max-width:1100px){#side{width:320px}}
+#busphoto{width:100%;max-height:230px;object-fit:cover;border-radius:12px;background:#0d1821}
+#busphoto[hidden]{display:none}
+.fleetno{font:700 44px/1 var(--num)}
+.model{font-size:20px;color:var(--dim);margin-top:4px}
+.chips{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.chip{background:var(--line);border-radius:999px;padding:4px 14px;font-size:20px;font-weight:600}
+.chip.ok{background:#1f4a33;color:var(--go)} .chip.warn{background:#4d3b14;color:var(--hurry)} .chip.bad{background:#4f2420;color:var(--miss)}
+.meta{color:var(--dim);font-size:17px;margin-top:8px;line-height:1.35}
+.pat{list-style:none;margin:0;padding:0 6px 0 0;flex:1;min-height:0;overflow-y:auto;position:relative;touch-action:pan-y;scrollbar-width:thin;scrollbar-color:var(--line) transparent;border-top:1px solid var(--line)}
+.ps{position:relative;display:grid;grid-template-columns:24px 1fr auto 42px;gap:8px;align-items:center;padding:7px 0;font-size:19px}
+.ps::before{content:"";position:absolute;left:11px;top:0;bottom:0;width:2px;background:var(--line)}
+.ps .dot{width:12px;height:12px;border-radius:50%;background:var(--panel);border:2px solid var(--dim);margin-left:5px;position:relative}
+.ps.passed{opacity:.45} .ps.passed .dot{background:var(--dim)}
+.ps.next .dot{background:var(--bus);border-color:var(--bus)}
+.ps.yours .dot{background:var(--go);border-color:var(--go)} .ps.yours .pn{color:var(--go);font-weight:600}
+.pt{font-family:var(--num);font-size:22px;font-weight:600}
+.pd{font-size:16px;font-weight:600;text-align:right} .pd.late{color:var(--hurry)} .pd.early{color:var(--bus)}
+.pbus{display:flex;align-items:center;gap:10px;padding:6px 0;color:var(--bus);font-weight:600;font-size:19px;position:relative}
+.pbus .busdot{width:36px;height:36px;border-width:3px;font-size:15px}
+.dbgbox{margin:12px 0 0;max-height:34vh;overflow:auto;font:13px/1.35 Consolas,monospace;color:var(--dim);background:#0d1821;border-radius:10px;padding:10px;white-space:pre-wrap}
+.row .dest .dbg{font:13px/1.3 Consolas,monospace;color:#6f8696}
+</style>
+</head>
+<body>
+<section class="panel" id="home">
+  <div class="clock" id="clock">--:--</div>
+  <div class="date" id="date"></div>
+  <div class="wx">
+    <div class="t" id="wx-t">--</div>
+    <div class="d" id="wx-d">Loading weather</div>
+  </div>
+  <p class="wx-sub" id="wx-sub"></p>
+  <div class="wifi">
+    <div id="qr"></div>
+    <div><b id="ssid"></b><p id="pass"></p><p>Scan to join the wifi</p></div>
+  </div>
+</section>
+
+<section class="panel" id="bus">
+  <div class="stops" id="buses"><div class="empty">Loading departures</div></div>
+  <div class="status" id="bus-status"></div>
+  <pre class="dbgbox" id="dbg"></pre>
+</section>
+
+<div id="mapwrap" hidden>
+  <div class="maphead"><div id="maptitle"></div><button id="mapclose">Close</button></div>
+  <div class="mapbody">
+    <div id="map"></div>
+    <aside id="side">
+      <img id="busphoto" alt="" hidden>
+      <div id="businfo"></div>
+      <ul class="pat" id="pattern"></ul>
+    </aside>
+  </div>
+  <div class="mapfoot" id="mapfoot"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const WX = {0:'Clear',1:'Mostly clear',2:'Partly cloudy',3:'Cloudy',45:'Fog',48:'Fog',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',
+  61:'Light rain',63:'Rain',65:'Heavy rain',71:'Snow',80:'Showers',81:'Showers',82:'Heavy showers',95:'Thunderstorm',96:'Thunderstorm',99:'Thunderstorm'};
+const DEBUG = location.search.includes('debug');
+let cfg = { walk: 5 }, busData = [], busStops = [], lastBusHtml = '', busOk = 0, busErr = '';
+
+// Tap a panel to make it fullscreen, tap again to go back. Returns to the split view after 60s of no touches.
+let idle;
+document.querySelectorAll('.panel').forEach(p => p.addEventListener('click', () => {
+  const on = !p.classList.contains('full');
+  document.querySelectorAll('.panel').forEach(x => x.classList.remove('full'));
+  document.body.classList.toggle('has-full', on);
+  p.classList.toggle('full', on);
+  clearTimeout(idle);
+  if (on) idle = setTimeout(() => { document.querySelectorAll('.panel').forEach(x => x.classList.remove('full')); document.body.classList.remove('has-full'); }, 60000);
+}));
+
+function tickClock() {
+  const n = new Date();
+  $('#clock').textContent = n.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: false });
+  $('#date').textContent = n.toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const rowHtml = b => {
+  const cls = b.m < cfg.walk ? 'miss' : b.m < cfg.walk + 3 ? 'hurry' : '';
+  return `<li class="row ${cls}" data-trip="${b.trip}" data-stop="${b.stopId}" data-mid="${b.mid}"><div class="rt">${b.route}</div>
+    <div class="dest">${esc(b.dest)}<small>${b.info || (b.live ? 'Live' : 'Scheduled')}</small>${DEBUG ? `<small class="dbg">${b.dbg || ''}</small>` : ''}</div>
+    <div class="mins">${b.m === 0 ? 'Now' : b.m}${b.m === 0 ? '' : '<small>min</small>'}</div></li>`;
+};
+function renderBuses() {
+  const now = Date.now();
+  const rows = busData
+    .map(b => ({ ...b, m: Math.round((new Date(b.time) - now) / 60000) }))
+    .filter(b => b.m >= 0)
+    .sort((a, b) => a.m - b.m);
+  const stops = busStops.length ? busStops : [{ id: '', name: 'Buses' }];
+  const box = $('#buses');
+  box.style.gridTemplateRows = `repeat(${stops.length}, minmax(0, 1fr))`;
+  box.classList.toggle('multi', stops.length > 1);
+  const html = stops.map(s => {
+    const mine = rows.filter(b => stops.length === 1 || b.group === s.id);
+    const title = !s.id || s.name === s.id ? s.name : `${s.name} (${s.id})`;
+    return `<div class="col"><h2>${esc(title)}</h2><ul class="buses">${mine.length ? mine.map(rowHtml).join('') : '<li class="empty">No upcoming departures</li>'}</ul></div>`;
+  }).join('');
+  if (html !== lastBusHtml) {   // only redraw when something changed, so scrolling isn't reset
+    const scroll = [...box.querySelectorAll('.buses')].map(u => u.scrollTop);
+    box.innerHTML = html; lastBusHtml = html;
+    box.querySelectorAll('.buses').forEach((u, i) => { u.scrollTop = scroll[i] || 0; });
+  }
+  const age = busOk ? Math.round((now - busOk) / 1000) : null;
+  const st = $('#bus-status');
+  if (age === null) { st.textContent = busErr || 'Waiting for first update'; st.className = 'status warn'; }
+  else if (age > 120) { st.textContent = `Bus data is out of date (updated ${Math.round(age / 60)} min ago). ${busErr}`; st.className = 'status warn'; }
+  else { st.textContent = `Updated ${age}s ago`; st.className = 'status'; }
+}
+
+async function loadBuses() {
+  try {
+    const r = await fetch('/api/buses');
+    if (!r.ok) throw new Error((await r.json()).error || r.status);
+    const j = await r.json(); busData = j.departures; busStops = j.stops; busOk = Date.now(); busErr = '';
+  } catch (e) { busErr = 'Could not reach TfNSW: ' + e.message; }
+  renderBuses();
+}
+
+async function loadDebug() {
+  try { $('#dbg').textContent = JSON.stringify(await (await fetch('/api/debug')).json(), null, 1); }
+  catch (e) { $('#dbg').textContent = 'Debug fetch failed: ' + e.message; }
+}
+
+async function loadWeather() {
+  try {
+    const u = `https://api.open-meteo.com/v1/forecast?latitude=${cfg.lat}&longitude=${cfg.lon}` +
+      '&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m' +
+      '&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto';
+    const j = await (await fetch(u)).json(), c = j.current, d = j.daily;
+    $('#wx-t').textContent = Math.round(c.temperature_2m) + '°';
+    $('#wx-d').textContent = WX[c.weather_code] || 'Weather';
+    $('#wx-sub').textContent = `Feels ${Math.round(c.apparent_temperature)}°, high ${Math.round(d.temperature_2m_max[0])}° low ${Math.round(d.temperature_2m_min[0])}°, rain ${d.precipitation_probability_max[0]}%, wind ${Math.round(c.wind_speed_10m)} km/h`;
+  } catch (e) { $('#wx-d').textContent = 'Weather unavailable'; }
+}
+
+// Tap a bus to see it on a live map; the map refreshes every 5s and closes itself after 2 minutes.
+let map, busMk, trackTrip, trackStop, trackMid, trackTimer, mapIdle, lastPat = '';
+function closeMap() { $('#mapwrap').hidden = true; clearInterval(trackTimer); clearTimeout(mapIdle); }
+function openMap(trip, stop, mid) {
+  if (!window.L) return;
+  trackTrip = trip; trackStop = stop; trackMid = mid; lastPat = ''; $('#mapwrap').hidden = false; $('#mapfoot').textContent = 'Loading';
+  if (!map) {
+    map = L.map('map', { zoomControl: false });
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
+  }
+  map.eachLayer(l => { if (!(l instanceof L.TileLayer)) map.removeLayer(l); });
+  busMk = null;
+  setTimeout(() => { map.invalidateSize(); refreshMap(true); }, 50);
+  clearInterval(trackTimer); trackTimer = setInterval(() => refreshMap(false), 5000);
+  clearTimeout(mapIdle); mapIdle = setTimeout(closeMap, 120000);
+}
+async function refreshMap(first) {
+  let j;
+  try { j = await (await fetch('/api/track?trip=' + encodeURIComponent(trackTrip) + '&stop=' + encodeURIComponent(trackStop) + '&mid=' + encodeURIComponent(trackMid || ''))).json(); }
+  catch (e) { $('#mapfoot').textContent = 'Could not load tracking data'; return; }
+  if (j.error) { $('#mapfoot').textContent = j.error; return; }
+  const stopLL = [j.stop.lat, j.stop.lon];
+  renderSide(j, first);
+  if (first) {
+    $('#maptitle').textContent = `${j.route}${j.dest ? ' to ' + j.dest : ''}`;
+    if (j.shape.length) L.polyline(j.shape, { color: '#00b5ef', weight: 5, opacity: 0.8 }).addTo(map);
+    L.circleMarker(stopLL, { radius: 10, color: '#fff', weight: 3, fillColor: '#7bd88f', fillOpacity: 1 }).addTo(map);
+    map.setView(stopLL, 15);
+  }
+  const v = j.vehicle;
+  if (!v) { $('#mapfoot').textContent = 'No live position for this bus yet. Your stop and the scheduled route are shown.'; return; }
+  const ll = [v.lat, v.lon];
+  if (!busMk) busMk = L.marker(ll, { icon: L.divIcon({ className: '', html: `<div class="busdot">${j.route}</div>`, iconSize: [54, 54] }) }).addTo(map);
+  else busMk.setLatLng(ll);
+  if (first || !map.getBounds().contains(ll)) map.fitBounds([ll, stopLL], { padding: [70, 70], maxZoom: 16 });
+  $('#mapfoot').textContent = [`${v.speed} km/h`, v.ageSecs != null ? `position updated ${v.ageSecs}s ago` : ''].filter(Boolean).join(', ');
+}
+const hhmm = iso => new Date(iso).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Australia/Sydney' });
+function renderSide(j, first) {
+  const b = j.bus, v = j.vehicle, rows = j.pattern || [], ph = $('#busphoto');
+  if (first) { ph.onerror = () => { ph.hidden = true; }; if (j.photo) { ph.hidden = false; ph.src = j.photo; } else ph.hidden = true; }
+  const cur = rows.find(r => r.delayMin !== null), d = cur ? cur.delayMin : null;
+  const late = d === null ? 'Scheduled' : d > 0 ? `${d} min late` : d < 0 ? `${-d} min early` : 'On time';
+  const lc = d === null ? '' : d > 4 ? 'bad' : d > 0 ? 'warn' : 'ok';
+  $('#businfo').innerHTML = `<div class="fleetno">${b ? 'Fleet ' + esc(b.fleetNo) : esc(j.route)}</div>
+    <div class="model">${b ? esc(b.model) : 'Bus details appear once the bus is on the road'}</div>
+    <div class="chips"><span class="chip ${lc}">${late}</span>${v ? `<span class="chip">${v.speed} km/h</span>` : ''}</div>
+    ${b ? `<div class="meta">${b.depot ? 'Depot: ' + esc(b.depot) + (b.operator ? ' (' + esc(b.operator) + ')' : '') : ''}${b.built ? '<br>Body built: ' + esc(b.built) : ''}</div>` : ''}`;
+  let shown = false;
+  const html = rows.map(r => {
+    let pre = '';
+    if (v && !shown && r.state === 'next') { shown = true; pre = `<li class="pbus"><span class="busdot">${esc(j.route)}</span>Bus is here now</li>`; }
+    const dl = r.delayMin > 0 ? `<span class="pd late">+${r.delayMin}</span>` : r.delayMin < 0 ? `<span class="pd early">${r.delayMin}</span>` : '<span class="pd"></span>';
+    return `${pre}<li class="ps ${r.state}${r.yours ? ' yours' : ''}"${r.id === trackStop ? ' data-here="1"' : ''}><span class="dot"></span><span class="pn">${esc(r.name)}</span><span class="pt">${hhmm(r.time)}</span>${dl}</li>`;
+  }).join('');
+  const list = $('#pattern');
+  if (html !== lastPat) {   // only redraw when something changed, so scrolling isn't reset
+    const top = list.scrollTop;
+    list.innerHTML = html; lastPat = html;
+    const focus = list.querySelector('.pbus') || list.querySelector('[data-here]');
+    list.scrollTop = first && focus ? Math.max(0, focus.offsetTop - list.clientHeight / 3) : top;
+  }
+}
+$('#mapclose').addEventListener('click', closeMap);
+$('#buses').addEventListener('click', e => {
+  const li = e.target.closest('.row');
+  if (!li) return;
+  e.stopPropagation(); openMap(li.dataset.trip, li.dataset.stop, li.dataset.mid);
+});
+
+(async function init() {
+  tickClock(); setInterval(tickClock, 1000);
+  try { cfg = await (await fetch('/api/config')).json(); } catch (e) {}
+  $('#ssid').textContent = cfg.ssid || ''; $('#pass').textContent = cfg.pass ? 'Password: ' + cfg.pass : '';
+  if (window.QRCode && cfg.wifi) new QRCode($('#qr'), { text: cfg.wifi, width: 260, height: 260 });
+  if (DEBUG) { loadDebug(); setInterval(loadDebug, 10000); } else $('#dbg').remove();
+  loadBuses(); setInterval(loadBuses, 30000); setInterval(renderBuses, 5000);
+  if (cfg.lat) { loadWeather(); setInterval(loadWeather, 600000); }
+})();
+</script>
+</body>
+</html>

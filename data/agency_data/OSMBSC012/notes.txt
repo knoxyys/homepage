@@ -1,0 +1,9 @@
+note_id,note_text
+"3619","On school days only, service operates via Smith's Hill High School and St Mary's Star of the Sea College. On school holidays, service operates differently and may depart some bus stops slightly earlier or later"
+"3621","On school days only, service operates via Woonona High School. On school holidays, service operates differently and may depart some bus stops slightly earlier or later"
+"3622","On school days only, service operates via St Mary's Star of the Sea College. On school holidays, service operates differently and may depart some bus stops slightly earlier or later"
+"3623","On school days only, service commences from St Mary's Star of the Sea College, Wollongong. On school holidays, service commences at the WIN Entertainment Centre, Crown St"
+"3624","On Monday to Thursday nights, service terminates at Fairy Meadow. On Friday nights, service extends through to Wollongong CBD/Entertainment Centre"
+"3625","On school days (Mondays excluded), the bus operating this service begins at Smith's Hill High School as a school bus Route S392 service. Students are permitted to stay on board the bus at Corrimal for through travel"
+"3626","Service does not operate during school holidays"
+"3627","Service commences at Smith's Hill High School and does not operate during school holidays"

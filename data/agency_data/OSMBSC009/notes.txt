@@ -1,0 +1,4 @@
+note_id,note_text
+"990","School Days Only"
+"994","Commences from Princes Hwy and Lawrence Hargrave Dr at 0740 and runs via Parkes St.School Days Only"
+"1770","During school holidays bus operates 10 minutes earlier.School Days Only"

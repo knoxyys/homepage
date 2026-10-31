@@ -1,0 +1,8 @@
+note_id,note_text
+"1227","Transfer Passengers for Cessnock Correctional Centre to Route 160 at 0930"
+"1228","Via Aberdare Rd. Bus stops on the depot side of Vincent St"
+"1229","Passengers from Cessnock Correctional Centre may transfer to Route 164 at 1545"
+"1230","Take passengers for Cessnock Correctional Centre from Route 164 due at 0930"
+"1384","Operates School Days Only"
+"1562","Transfer Passengers for Cessnock Correctional Centre to Route 163 at 1015"
+"2585","Operates via Aberdare Road"

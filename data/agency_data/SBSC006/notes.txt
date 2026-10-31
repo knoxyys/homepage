@@ -1,0 +1,6 @@
+note_id,note_text
+"1705","Operates school days only"
+"2166","Special event or additional event trip"
+"2615","Trip operates on School Days only"
+"2616","Via Concord HS on School Days. During School Vacation depart Cabarita 5 minutes later and does not divert via Concord HS"
+"2694","Terminates at Tempe, Princess Hwy bfr Smith St, TSN204448"

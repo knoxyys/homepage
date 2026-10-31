@@ -1,0 +1,11 @@
+note_id,note_text
+"8","Operates on school days only"
+"1719","Express to Dover Rd then all stops"
+"2103","Scheduled connection available to route 390X at UNSW for travel towards La Perouse via Anzac Pde"
+"2105",": Scheduled connection available to route 390X at UNSW for travel towards Bondi Junction"
+"2107","Bus continues as route 397 via Broome St, Beauchamp Rd, Chicago Ave and Minneapolis Cres. Customers can remain on board"
+"2110","Deviates via Woomera Rd, Bega Ave and Mirrabooka Cres"
+"2113","Scheduled connection available to route 392N at UNSW for travel towards the City"
+"2114","Scheduled connection available to route 392N at UNSW for travel towards Matraville via Bunnerong Rd"
+"2187","Deviates via Alexandria Park Community School on school days only"
+"2193","Deviates via Mirrabooka Cres, Bega Ave and Woomera Rd"

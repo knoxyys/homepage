@@ -1,0 +1,3 @@
+service_id,date,exception_type
+"4","20240630","1"
+"6","20240630","1"

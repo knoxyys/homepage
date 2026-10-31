@@ -1,0 +1,12 @@
+note_id,note_text
+"534","Trip operates school days only"
+"1495","Diverts to Blaxland Public School on School Days only"
+"1496","Diverts via Emu Plains Schools on School Days Only"
+"1500","Diverts via Blue Mountains Grammar School on School Days only"
+"1504","Diverts via Railway Pde"
+"1505","Diverts via Avoca St, Clifton Ave, Lucasville Rd, Mount St and Hillside Cres on School Days only"
+"1506","Change to Leonay Bus"
+"1507","Divert via Emu Plains School on School Days Only"
+"1510","Diverts via Railway Pde Medlow Bath Station School Days only"
+"1511","Operate to Team Rooms"
+"1765","Diverts via Springwood PS School Days Only"

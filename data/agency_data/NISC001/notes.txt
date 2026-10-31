@@ -1,0 +1,12 @@
+note_id,note_text
+"1346","Operates Early Saturday morning only"
+"1353","Starts from Callaghan College (Wallsend Campus) 5 minutes earlier on school days only"
+"1355","Continues to Callaghan College (Wallsend Campus) on school days only"
+"1364","Continues to Callaghan College ( Wallsend Campus) on School days only"
+"1369","Operates Early Sunday Morning Only"
+"1373","Terminates at Jesmond"
+"1375","Operates via Belmont High School on school days only"
+"1575","Diverts Via Denison & Beaumont Sts Operates Early Saturday Morning Only"
+"2206","Ferry operates Friday nights only"
+"2209","Operates via Newcastle High School on School Days only"
+"2213","Diverts Via Newcastle High,  School Days Only"

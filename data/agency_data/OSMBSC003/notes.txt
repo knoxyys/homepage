@@ -1,0 +1,5 @@
+note_id,note_text
+"1235","Change bus for through travel"
+"1236","Bus travels direct via Stockton St"
+"1239","Bus travels into Taylors Beach"
+"1338","Bus operates via Sandy Point Rd Corlette"
